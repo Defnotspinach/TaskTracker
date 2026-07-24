@@ -1,33 +1,55 @@
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
-function isRailwayRuntime() {
-  return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID || process.env.RAILWAY_PROJECT_ID);
+function parseDatabaseUrl(databaseUrl) {
+  const url = new URL(databaseUrl);
+
+  return {
+    username: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.replace(/^\//, ''),
+    host: url.hostname,
+    port: Number(url.port || 3306),
+    dialect: 'mysql',
+    logging: false,
+  };
 }
 
 function resolveDatabaseConfig() {
-  if (isRailwayRuntime() && process.env.DATABASE_URL) {
-    const url = new URL(process.env.DATABASE_URL);
+  const production = process.env.NODE_ENV === 'production';
+  const databaseUrl = process.env.DATABASE_URL ?? process.env.MYSQL_URL ?? process.env.MYSQL_PUBLIC_URL;
+
+  if (databaseUrl) {
+    return parseDatabaseUrl(databaseUrl);
+  }
+
+  if (production) {
+    const username = process.env.MYSQLUSER ?? process.env.DB_USER;
+    const password = process.env.MYSQLPASSWORD ?? process.env.DB_PASSWORD;
+    const database = process.env.MYSQLDATABASE ?? process.env.DB_NAME;
+    const host = process.env.MYSQLHOST ?? process.env.DB_HOST;
+
+    if (!host || !username || !password || !database) {
+      throw new Error('Missing production MySQL variables. Attach the Railway MySQL service to the app service so DATABASE_URL or MYSQLHOST/MYSQLUSER/MYSQLPASSWORD/MYSQLDATABASE are available.');
+    }
 
     return {
-      username: decodeURIComponent(url.username),
-      password: decodeURIComponent(url.password),
-      database: url.pathname.replace(/^\//, ''),
-      host: url.hostname,
-      port: Number(url.port || 3306),
+      username,
+      password,
+      database,
+      host,
+      port: Number(process.env.MYSQLPORT ?? process.env.DB_PORT ?? 3306),
       dialect: 'mysql',
       logging: false,
     };
   }
 
   return {
-    username: isRailwayRuntime() ? (process.env.MYSQLUSER ?? process.env.DB_USER ?? 'root') : (process.env.DB_USER ?? 'root'),
-    password: isRailwayRuntime() ? (process.env.MYSQLPASSWORD ?? process.env.DB_PASSWORD ?? '') : 'rootadmin',
-    database: isRailwayRuntime() ? (process.env.MYSQLDATABASE ?? process.env.DB_NAME ?? 'task_tracker') : 'task_tracker',
-    host: isRailwayRuntime()
-      ? (process.env.MYSQLHOST ?? process.env.DB_HOST ?? 'localhost')
-      : (process.env.DB_HOST && process.env.DB_HOST !== 'mysql.railway.internal' ? process.env.DB_HOST : 'localhost'),
-    port: Number(isRailwayRuntime() ? (process.env.MYSQLPORT ?? process.env.DB_PORT ?? 3306) : (process.env.DB_PORT ?? 3306)),
+    username: process.env.DB_USER ?? 'root',
+    password: 'rootadmin',
+    database: 'task_tracker',
+    host: 'localhost',
+    port: Number(process.env.DB_PORT ?? 3306),
     dialect: 'mysql',
     logging: false,
   };

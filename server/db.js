@@ -3,22 +3,46 @@ import mysql from 'mysql2/promise';
 
 dotenv.config();
 
-function isRailwayRuntime() {
-  return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID || process.env.RAILWAY_PROJECT_ID);
+function parseDatabaseUrl(databaseUrl) {
+  const url = new URL(databaseUrl);
+
+  return {
+    host: url.hostname,
+    port: Number(url.port || 3306),
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.replace(/^\//, ''),
+    waitForConnections: true,
+    connectionLimit: 10,
+    namedPlaceholders: true,
+    dateStrings: true,
+  };
 }
 
 function resolveDatabaseConfig() {
-  const railwayRuntime = isRailwayRuntime();
-  const databaseUrl = railwayRuntime ? process.env.DATABASE_URL : null;
+  const production = process.env.NODE_ENV === 'production';
+  const databaseUrl = process.env.DATABASE_URL ?? process.env.MYSQL_URL ?? process.env.MYSQL_PUBLIC_URL;
 
   if (databaseUrl) {
-    const url = new URL(databaseUrl);
+    return parseDatabaseUrl(databaseUrl);
+  }
+
+  if (production) {
+    const host = process.env.MYSQLHOST ?? process.env.DB_HOST;
+    const user = process.env.MYSQLUSER ?? process.env.DB_USER;
+    const password = process.env.MYSQLPASSWORD ?? process.env.DB_PASSWORD;
+    const database = process.env.MYSQLDATABASE ?? process.env.DB_NAME;
+
+    if (!host || !user || !password || !database) {
+      throw new Error('Missing production MySQL variables. Attach the Railway MySQL service to the app service so DATABASE_URL or MYSQLHOST/MYSQLUSER/MYSQLPASSWORD/MYSQLDATABASE are available.');
+    }
+
     return {
-      host: url.hostname,
-      port: Number(url.port || 3306),
-      user: decodeURIComponent(url.username),
-      password: decodeURIComponent(url.password),
-      database: url.pathname.replace(/^\//, ''),
+      host,
+      port: Number(process.env.MYSQLPORT ?? process.env.DB_PORT ?? 3306),
+      user,
+      password,
+      database,
       waitForConnections: true,
       connectionLimit: 10,
       namedPlaceholders: true,
@@ -26,15 +50,11 @@ function resolveDatabaseConfig() {
     };
   }
 
-  const host = railwayRuntime
-    ? (process.env.MYSQLHOST ?? process.env.DB_HOST ?? 'localhost')
-    : (process.env.DB_HOST && process.env.DB_HOST !== 'mysql.railway.internal' ? process.env.DB_HOST : 'localhost');
-  const port = Number(railwayRuntime ? (process.env.MYSQLPORT ?? process.env.DB_PORT ?? 3306) : (process.env.DB_PORT ?? 3306));
-  const user = railwayRuntime ? (process.env.MYSQLUSER ?? process.env.DB_USER ?? 'root') : (process.env.DB_USER ?? 'root');
-  const password = railwayRuntime ? (process.env.MYSQLPASSWORD ?? process.env.DB_PASSWORD ?? '') : 'rootadmin';
-  const database = railwayRuntime
-    ? (process.env.MYSQLDATABASE ?? process.env.DB_NAME ?? 'task_tracker')
-    : 'task_tracker';
+  const host = process.env.DB_HOST && process.env.DB_HOST !== 'mysql.railway.internal' ? process.env.DB_HOST : 'localhost';
+  const port = Number(process.env.DB_PORT ?? 3306);
+  const user = process.env.DB_USER ?? 'root';
+  const password = 'rootadmin';
+  const database = 'task_tracker';
 
   return {
     host,
