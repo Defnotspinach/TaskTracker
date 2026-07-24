@@ -60,6 +60,23 @@ JWT_SECRET=tasktracker-dev-secret
 
 The backend reads the database and JWT settings from the same `.env` file.
 
+## Railway Deployment
+
+This project uses Sequelize migrations instead of `sequelize.sync()`, and the Express server serves the built React app from `dist/`.
+
+Set these environment variables in Railway:
+
+- `DATABASE_URL` for a single MySQL connection string, or `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, and `MYSQLDATABASE`
+- `JWT_SECRET`
+- `VITE_API_URL` only if you split the frontend and backend onto different domains; for a single Railway service it can be left unset
+
+Use these commands in Railway:
+
+- Build command: `npm run build`
+- Start command: `npm start`
+
+The start script runs `sequelize-cli db:migrate`, then launches the server. When `dist/` exists, the server serves the React app at the same Railway URL as the API.
+
 3. Start the app:
 
 ```bash
@@ -115,7 +132,7 @@ The frontend API client in [src/lib/api.js](src/lib/api.js) uses these endpoints
 - The backend auto-creates the database and tables if they do not exist, which is convenient for local development but may be too permissive for a locked-down production setup.
 - The UI still uses a task status vocabulary of `todo`, `in-progress`, `hold`, `testing`, and `done`, so the backend stores those values to keep the current screens working.
 - The task model includes `priority` because the existing UI depends on it, even though the earlier database sketch did not include that field.
-- The client defaults to `http://localhost:3000` if `VITE_API_URL` is not set, which is convenient for local development but should be overridden for deployment.
+- The client uses `http://localhost:3000` only in development; in production it uses the same origin unless `VITE_API_URL` is set.
 
 ## Project Overview
 

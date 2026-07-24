@@ -3,17 +3,53 @@ import mysql from 'mysql2/promise';
 
 dotenv.config();
 
-const baseConfig = {
-  host: process.env.DB_HOST ?? 'localhost',
-  port: Number(process.env.DB_PORT ?? 3306),
-  user: process.env.DB_USER ?? 'root',
-  password: process.env.DB_PASSWORD ?? '',
-  database: process.env.DB_NAME ?? 'task_tracker',
-  waitForConnections: true,
-  connectionLimit: 10,
-  namedPlaceholders: true,
-  dateStrings: true,
-};
+function isRailwayRuntime() {
+  return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID || process.env.RAILWAY_PROJECT_ID);
+}
+
+function resolveDatabaseConfig() {
+  const railwayRuntime = isRailwayRuntime();
+  const databaseUrl = railwayRuntime ? process.env.DATABASE_URL : null;
+
+  if (databaseUrl) {
+    const url = new URL(databaseUrl);
+    return {
+      host: url.hostname,
+      port: Number(url.port || 3306),
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database: url.pathname.replace(/^\//, ''),
+      waitForConnections: true,
+      connectionLimit: 10,
+      namedPlaceholders: true,
+      dateStrings: true,
+    };
+  }
+
+  const host = railwayRuntime
+    ? (process.env.MYSQLHOST ?? process.env.DB_HOST ?? 'localhost')
+    : (process.env.DB_HOST && process.env.DB_HOST !== 'mysql.railway.internal' ? process.env.DB_HOST : 'localhost');
+  const port = Number(railwayRuntime ? (process.env.MYSQLPORT ?? process.env.DB_PORT ?? 3306) : (process.env.DB_PORT ?? 3306));
+  const user = railwayRuntime ? (process.env.MYSQLUSER ?? process.env.DB_USER ?? 'root') : (process.env.DB_USER ?? 'root');
+  const password = railwayRuntime ? (process.env.MYSQLPASSWORD ?? process.env.DB_PASSWORD ?? '') : 'rootadmin';
+  const database = railwayRuntime
+    ? (process.env.MYSQLDATABASE ?? process.env.DB_NAME ?? 'task_tracker')
+    : 'task_tracker';
+
+  return {
+    host,
+    port,
+    user,
+    password,
+    database,
+    waitForConnections: true,
+    connectionLimit: 10,
+    namedPlaceholders: true,
+    dateStrings: true,
+  };
+}
+
+const baseConfig = resolveDatabaseConfig();
 
 let pool;
 
