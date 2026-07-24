@@ -27,7 +27,7 @@ export default function SignUpPage() {
       await signUp(data);
       navigate('/tasks');
     } catch (err) {
-      setServerError(err.message);
+      setServerError(err?.message || String(err) || 'An error occurred during sign up');
     }
   };
 

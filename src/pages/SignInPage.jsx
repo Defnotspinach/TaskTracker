@@ -45,7 +45,7 @@ export default function SignInPage() {
       await signIn(data);
       navigate('/tasks');
     } catch (err) {
-      setServerError(err.message);
+      setServerError(err?.message || String(err) || 'An error occurred during sign in');
     }
   };
 
