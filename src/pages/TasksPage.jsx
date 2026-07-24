@@ -36,6 +36,7 @@ export default function TasksPage() {
   const [search, setSearch]               = useState('');
   const [filterStatus, setFilterStatus]   = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [sortBy, setSortBy]               = useState('dueDate');
   const [view, setView]                   = useState('kanban');
   const [showFilters, setShowFilters]     = useState(false);
 
@@ -48,24 +49,41 @@ export default function TasksPage() {
 
   useEffect(() => {
     if (user) {
-      fetchTasks(user.id);
+      fetchTasks(user.id, { sort: sortBy });
+    }
+  }, [user, sortBy]);
+
+  useEffect(() => {
+    if (user) {
       fetchCategories(user.id);
     }
   }, [user]);
 
   const filtered = useMemo(() => {
-    return tasks.filter(t => {
+    const sorted = [...tasks].sort((left, right) => {
+      if (sortBy === 'status') {
+        const statusOrder = ['todo', 'in-progress', 'hold', 'testing', 'done'];
+        const statusDelta = statusOrder.indexOf(left.status) - statusOrder.indexOf(right.status);
+        if (statusDelta !== 0) return statusDelta;
+        return new Date(left.dueDate) - new Date(right.dueDate);
+      }
+
+      return new Date(left.dueDate) - new Date(right.dueDate);
+    });
+
+    return sorted.filter(t => {
       const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
       const matchStatus = !filterStatus || t.status === filterStatus;
       const matchCat    = !filterCategory || t.category === filterCategory;
       return matchSearch && matchStatus && matchCat;
     });
-  }, [tasks, search, filterStatus, filterCategory]);
+  }, [tasks, search, filterStatus, filterCategory, sortBy]);
 
   const handleCreate = async (data) => {
     setSaving(true);
     try {
       await createTask(user.id, data);
+      await fetchTasks(user.id, { sort: sortBy });
       setCreateOpen(false);
       toast.success('Task created');
     } catch (err) {
@@ -79,6 +97,7 @@ export default function TasksPage() {
     setSaving(true);
     try {
       await updateTask(user.id, editTask.id, data);
+      await fetchTasks(user.id, { sort: sortBy });
       setEditTask(null);
       toast.success('Task updated');
     } catch (err) {
@@ -92,6 +111,7 @@ export default function TasksPage() {
     setDeleting(true);
     try {
       await deleteTask(user.id, deleteTarget.id);
+      await fetchTasks(user.id, { sort: sortBy });
       setDeleteTarget(null);
       toast.success('Task deleted');
     } catch (err) {
@@ -101,7 +121,7 @@ export default function TasksPage() {
     }
   };
 
-  const hasFilters = filterStatus || filterCategory;
+  const hasFilters = filterStatus || filterCategory || sortBy !== 'dueDate';
 
   return (
     <div className="flex flex-col h-full">
@@ -179,9 +199,13 @@ export default function TasksPage() {
             <option value="">All categories</option>
             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
           </select>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input text-sm w-40 py-1.5" aria-label="Sort tasks">
+            <option value="dueDate">Sort by due date</option>
+            <option value="status">Sort by status</option>
+          </select>
           {hasFilters && (
             <button
-              onClick={() => { setFilterStatus(''); setFilterCategory(''); }}
+              onClick={() => { setFilterStatus(''); setFilterCategory(''); setSortBy('dueDate'); }}
               className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <X size={12} /> Clear filters

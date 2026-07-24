@@ -6,11 +6,11 @@ export const useTaskStore = create((set) => ({
   loading: false,
   error: null,
 
-  fetchTasks: async (userId) => {
+  fetchTasks: async (userId, params = {}) => {
     void userId;
     set({ loading: true, error: null });
     try {
-      const tasks = await getTasks();
+      const tasks = await getTasks(params);
       set({ tasks, loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
