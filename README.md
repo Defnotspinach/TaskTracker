@@ -1,6 +1,6 @@
 # TaskTracker
 
-TaskTracker is a React + Vite task management frontend with authentication, protected routes, task and category screens, and an Axios-based API client. The app is built to work against a JWT-protected backend API and currently falls back to `http://localhost:3000` when no API URL is provided.
+TaskTracker is a React + Vite task management app with authentication, protected routes, task and category screens, and an Axios-based API client. The frontend now talks to a real Express + MySQL backend through JWT-protected endpoints.
 
 ## Tech Stack
 
@@ -13,6 +13,10 @@ TaskTracker is a React + Vite task management frontend with authentication, prot
 - Zod
 - Lucide React
 - Tailwind CSS
+- Express
+- MySQL2
+- JSON Web Tokens
+- bcryptjs
 
 ## Local Setup
 
@@ -22,27 +26,35 @@ TaskTracker is a React + Vite task management frontend with authentication, prot
 npm install
 ```
 
-2. Configure environment variables if needed:
+2. Configure environment variables:
 
 Create a `.env` file in the project root and set the API base URL when your backend is not running on the default address:
 
 ```env
 VITE_API_URL=http://localhost:3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=rootadmin
+DB_NAME=task_tracker
+JWT_SECRET=tasktracker-dev-secret
 ```
 
-The app also includes a separate `.env` file for backend database settings, but those values are only used by server-side code.
+The backend reads the database and JWT settings from the same `.env` file.
 
-3. Start the development server:
+3. Start the app:
 
 ```bash
 npm run dev
 ```
 
-4. Open the app in your browser at the local Vite URL shown in the terminal.
+This starts both the API server and the Vite client. Open the client URL shown in the terminal.
 
 ## Available Scripts
 
-- `npm run dev` - Start the Vite development server.
+- `npm run dev` - Start the API server and the Vite client together.
+- `npm run client` - Start only the Vite development server.
+- `npm run server` - Start only the API server.
 - `npm run build` - Create a production build.
 - `npm run preview` - Preview the production build locally.
 - `npm run lint` - Run ESLint.
@@ -82,11 +94,10 @@ The frontend API client in [src/lib/api.js](src/lib/api.js) uses these endpoints
 
 ## Known Limitations / Trade-offs
 
-- The repository currently contains a frontend only; the backend API implementation is not included here.
-- Several stores still use in-memory mock data for local UI behavior, so persistence depends on connecting the app to a real backend.
-- The client defaults to `http://localhost:3000` if `VITE_API_URL` is not set, which is convenient for local development but must be updated for deployment.
-- Database environment variables such as `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` are backend-only settings and are not consumed by the frontend build.
-- `updateCategory` and `deleteCategory` are exposed in the client, but they depend on backend support being present and stable.
+- The backend auto-creates the database and tables if they do not exist, which is convenient for local development but may be too permissive for a locked-down production setup.
+- The UI still uses a task status vocabulary of `todo`, `in-progress`, `hold`, `testing`, and `done`, so the backend stores those values to keep the current screens working.
+- The task model includes `priority` because the existing UI depends on it, even though the earlier database sketch did not include that field.
+- The client defaults to `http://localhost:3000` if `VITE_API_URL` is not set, which is convenient for local development but should be overridden for deployment.
 
 ## Project Overview
 

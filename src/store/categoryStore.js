@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { mockCategories } from '../lib/mockData';
+import { createCategory as createCategoryApi, deleteCategory as deleteCategoryApi, getCategories, updateCategory as updateCategoryApi } from '../lib/api';
 
 export const useCategoryStore = create((set) => ({
   categories: [],
@@ -7,9 +7,10 @@ export const useCategoryStore = create((set) => ({
   error: null,
 
   fetchCategories: async (userId) => {
+    void userId;
     set({ loading: true, error: null });
     try {
-      const categories = await mockCategories.getAll(userId);
+      const categories = await getCategories();
       set({ categories, loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
@@ -17,19 +18,22 @@ export const useCategoryStore = create((set) => ({
   },
 
   createCategory: async (userId, name) => {
-    const cat = await mockCategories.create(userId, name);
+    void userId;
+    const cat = await createCategoryApi({ name });
     set(s => ({ categories: [...s.categories, cat] }));
     return cat;
   },
 
   updateCategory: async (userId, id, name) => {
-    const updated = await mockCategories.update(userId, id, name);
+    void userId;
+    const updated = await updateCategoryApi(id, { name });
     set(s => ({ categories: s.categories.map(c => (c.id === id ? updated : c)) }));
     return updated;
   },
 
   deleteCategory: async (userId, id) => {
-    await mockCategories.delete(userId, id);
+    void userId;
+    await deleteCategoryApi(id);
     set(s => ({ categories: s.categories.filter(c => c.id !== id) }));
   },
 }));

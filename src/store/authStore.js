@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { mockAuth } from '../lib/mockData';
+import { getMe, login, register } from '../lib/api';
 
 const TOKEN_KEY = 'tt_token';
 
-export const useAuthStore = create((set, get) => ({
+export const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem(TOKEN_KEY) || null,
   loading: false,
@@ -16,7 +16,7 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
     try {
-      const user = await mockAuth.getMe(token);
+      const user = await getMe();
       set({ user, token, initialized: true });
     } catch {
       localStorage.removeItem(TOKEN_KEY);
@@ -27,7 +27,7 @@ export const useAuthStore = create((set, get) => ({
   signIn: async (credentials) => {
     set({ loading: true });
     try {
-      const { token, user } = await mockAuth.signIn(credentials);
+      const { token, user } = await login(credentials);
       localStorage.setItem(TOKEN_KEY, token);
       set({ user, token, loading: false });
     } catch (err) {
@@ -39,7 +39,7 @@ export const useAuthStore = create((set, get) => ({
   signUp: async (data) => {
     set({ loading: true });
     try {
-      const { token, user } = await mockAuth.signUp(data);
+      const { token, user } = await register(data);
       localStorage.setItem(TOKEN_KEY, token);
       set({ user, token, loading: false });
     } catch (err) {
