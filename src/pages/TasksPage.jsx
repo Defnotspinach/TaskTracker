@@ -5,6 +5,7 @@ import { useTaskStore } from '../store/taskStore';
 import { useCategoryStore } from '../store/categoryStore';
 import { StatusBadge } from '../components/ui/Badge';
 import TaskCard from '../components/tasks/TaskCard';
+import TaskDetailDrawer from '../components/tasks/TaskDetailDrawer';
 import TaskForm from '../components/tasks/TaskForm';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -39,6 +40,7 @@ export default function TasksPage() {
   const [showFilters, setShowFilters]     = useState(false);
 
   const [createOpen, setCreateOpen]       = useState(false);
+  const [viewTask, setViewTask]           = useState(null);
   const [editTask, setEditTask]           = useState(null);
   const [deleteTarget, setDeleteTarget]   = useState(null);
   const [saving, setSaving]               = useState(false);
@@ -189,7 +191,7 @@ export default function TasksPage() {
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-auto px-4 py-4 bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 overflow-auto px-5 py-4 bg-grid">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
             <Spinner size="lg" className="text-violet-500" />
@@ -201,9 +203,9 @@ export default function TasksPage() {
             <button className="btn-secondary" onClick={() => fetchTasks(user.id)}>Retry</button>
           </div>
         ) : view === 'kanban' ? (
-          <KanbanBoard tasks={filtered} columns={COLUMNS} colColors={COL_COLORS} onEdit={setEditTask} onDelete={setDeleteTarget} />
+          <KanbanBoard tasks={filtered} columns={COLUMNS} colColors={COL_COLORS} onView={setViewTask} onEdit={setEditTask} onDelete={setDeleteTarget} />
         ) : (
-          <ListView tasks={filtered} onEdit={setEditTask} onDelete={setDeleteTarget} />
+          <ListView tasks={filtered} onView={setViewTask} onEdit={setEditTask} onDelete={setDeleteTarget} />
         )}
       </div>
 
@@ -230,19 +232,26 @@ export default function TasksPage() {
         message="Are you sure you want to delete this task? This action cannot be undone."
         loading={deleting}
       />
+
+      <TaskDetailDrawer
+        task={viewTask}
+        onClose={() => setViewTask(null)}
+        onEdit={(t) => { setViewTask(null); setEditTask(t); }}
+        onDelete={(t) => { setViewTask(null); setDeleteTarget(t); }}
+      />
     </div>
   );
 }
 
-function KanbanBoard({ tasks, columns, colColors, onEdit, onDelete }) {
+function KanbanBoard({ tasks, columns, colColors, onView, onEdit, onDelete }) {
   return (
-    <div className="flex gap-3 min-w-max pb-4 items-start">
+    <div className="flex gap-4 min-w-max pb-4 items-start">
       {columns.map(col => {
         const colTasks = tasks.filter(t => t.status === col.key);
         return (
-          <div key={col.key} className="w-64 flex-shrink-0">
+          <div key={col.key} className="w-72 flex-shrink-0">
             {/* Column header */}
-            <div className="flex items-center gap-2 mb-2 px-0.5">
+            <div className="flex items-center gap-2 mb-3 px-0.5">
               <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                 {col.label}
               </span>
@@ -252,14 +261,14 @@ function KanbanBoard({ tasks, columns, colColors, onEdit, onDelete }) {
             </div>
 
             {/* Cards */}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {colTasks.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg py-6 text-center">
+                <div className="border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl py-8 text-center">
                   <p className="text-xs text-gray-400 dark:text-gray-600">No tasks</p>
                 </div>
               ) : (
                 colTasks.map(t => (
-                  <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} />
+                  <TaskCard key={t.id} task={t} onClick={onView} onEdit={onEdit} onDelete={onDelete} />
                 ))
               )}
             </div>
@@ -270,7 +279,7 @@ function KanbanBoard({ tasks, columns, colColors, onEdit, onDelete }) {
   );
 }
 
-function ListView({ tasks, onEdit, onDelete }) {
+function ListView({ tasks, onView, onEdit, onDelete }) {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-2">
@@ -292,17 +301,29 @@ function ListView({ tasks, onEdit, onDelete }) {
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
           {tasks.map(t => (
-            <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+            <tr
+              key={t.id}
+              onClick={() => onView?.(t)}
+              className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors cursor-pointer"
+            >
               <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{t.title}</td>
               <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
               <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t.category}</td>
               <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t.dueDate}</td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1 justify-end">
-                  <button onClick={() => onEdit(t)} aria-label="Edit task" className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                  <button
+                    onClick={e => { e.stopPropagation(); onEdit(t); }}
+                    aria-label="Edit task"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                   </button>
-                  <button onClick={() => onDelete(t)} aria-label="Delete task" className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                  <button
+                    onClick={e => { e.stopPropagation(); onDelete(t); }}
+                    aria-label="Delete task"
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                   </button>
                 </div>

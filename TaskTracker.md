@@ -1,5 +1,46 @@
 # Frontend Requirements
 
+## Data Models
+
+These models define the expected application data contract for the backend and any mock layer used by the frontend.
+
+### User Model
+
+```text
+id: INTEGER
+name: STRING
+email: STRING (unique)
+password: STRING
+```
+
+Requirements:
+
+- Store `password` as a bcrypt hash.
+- Never store or transmit the password in plain text.
+
+### Category Model
+
+```text
+id: INTEGER
+name: STRING (unique)
+```
+
+### Task Model
+
+```text
+id: INTEGER
+title: STRING
+description: TEXT
+status: ENUM(
+	"pending",
+	"in_progress",
+	"completed"
+)
+due_date: DATEONLY
+category_id: INTEGER
+user_id: INTEGER
+```
+
 ## Authentication
 
 ### Sign Up Page
