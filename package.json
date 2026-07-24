@@ -7,7 +7,7 @@
     "client": "vite",
     "db:migrate": "sequelize-cli db:migrate",
     "server": "npm run db:migrate && node server/index.js",
-    "dev": "concurrently -k \"npm:server\" \"npm:client\"",
+    "dev": "node scripts/dev.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test",

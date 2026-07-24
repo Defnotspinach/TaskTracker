@@ -50,6 +50,14 @@ export const login = (payload) =>
 export const getMe = () =>
   api.get('/api/auth/me').then((r) => r.data);
 
+/** POST /api/auth/password-reset/request  →  { message, resetToken, expiresAt, user } */
+export const requestPasswordReset = (payload) =>
+  api.post('/api/auth/password-reset/request', payload).then((r) => r.data);
+
+/** POST /api/auth/password-reset/confirm  →  { message } */
+export const confirmPasswordReset = (payload) =>
+  api.post('/api/auth/password-reset/confirm', payload).then((r) => r.data);
+
 // ─── Health ───────────────────────────────────────────────────────────────────
 
 /** GET /api/health  →  { status } */
