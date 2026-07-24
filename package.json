@@ -6,8 +6,8 @@
   "scripts": {
     "client": "vite",
     "db:migrate": "sequelize-cli db:migrate",
-    "server": "npm run db:migrate && node server/index.js",
-    "start": "npm run db:migrate && node server/index.js",
+    "server": "node server/index.js",
+    "start": "node scripts/railway-start.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "vite build",
     "lint": "eslint .",

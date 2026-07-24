@@ -70,12 +70,16 @@ Set these environment variables in Railway:
 - `JWT_SECRET`
 - `VITE_API_URL` only if you split the frontend and backend onto different domains; for a single Railway service it can be left unset
 
+Important: these database variables must be attached to the app service, not only the MySQL service.
+
 Use these commands in Railway:
 
 - Build command: `npm run build`
 - Start command: `npm start`
 
-The start script runs `sequelize-cli db:migrate`, then launches the server. When `dist/` exists, the server serves the React app at the same Railway URL as the API.
+The start script runs `scripts/railway-start.mjs`, which checks for the production database variables, runs `sequelize-cli db:migrate`, and then launches the server. When `dist/` exists, the server serves the React app at the same Railway URL as the API.
+
+If Railway is still using an old start command in the dashboard, update it to `npm start` and redeploy.
 
 3. Start the app:
 
