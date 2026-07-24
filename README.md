@@ -1,6 +1,24 @@
 # TaskTracker
 
 TaskTracker is a React + Vite task management app with authentication, protected routes, task and category screens, and an Axios-based API client. The frontend now talks to a real Express + MySQL backend through JWT-protected endpoints.
+## Signin/SignUp
+<img width="1919" height="913" alt="image" src="https://github.com/user-attachments/assets/5f590969-840c-4c2c-be6d-525f61648267" />
+<img width="1918" height="905" alt="image" src="https://github.com/user-attachments/assets/faecfbbd-f482-4da2-92c1-d55d96f38307" />
+
+## DASHBOARD
+<img width="1913" height="910" alt="image" src="https://github.com/user-attachments/assets/6ee38f70-07a9-4561-bb15-749ea43423f3" />
+
+## TASK
+<img width="1900" height="905" alt="image" src="https://github.com/user-attachments/assets/45ccf451-7f8b-42c3-bd97-3873a0b9fa69" />
+
+## TASK ADD
+<img width="1906" height="883" alt="image" src="https://github.com/user-attachments/assets/3795c8b3-824e-416c-a2bd-35497053c3ac" />
+
+## TASK CLICKED
+<img width="1898" height="894" alt="image" src="https://github.com/user-attachments/assets/3d2d2616-b5f3-4246-bdfe-b634a0dd7861" />
+
+## CATEGORIES
+<img width="1905" height="908" alt="image" src="https://github.com/user-attachments/assets/7068c80d-68db-4a43-beda-661746435c65" />
 
 ## Tech Stack
 
