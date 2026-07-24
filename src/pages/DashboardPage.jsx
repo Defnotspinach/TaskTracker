@@ -47,7 +47,7 @@ export default function DashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Good morning, {user?.name?.split(' ')[0]} 👋
+          Good morning, {user?.name?.split(' ')[0]}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Here's what's happening with your tasks today.
